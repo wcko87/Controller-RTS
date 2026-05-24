@@ -4,6 +4,7 @@ import pydirectinput # currently I import this only for shift. This uses ctypes.
 import math
 import statistics
 import time
+import sys
 from vk_keys import VK_KEYS
 
 import tkinter as tk
@@ -17,12 +18,21 @@ import ctypes
 
 import mss
 
-def log_error(message):
-    print(message)
+VERBOSITY_WARN = 1
+VERBOSITY_ERROR = 2
+
+PRINT_VERBOSITY = VERBOSITY_ERROR
+def log_error(message, verbosity=VERBOSITY_ERROR):
+    if verbosity >= PRINT_VERBOSITY:
+        print(message)
 
 def log_key(*message):
     pass
     #print(message)
+
+HOTKEY_MAPPING_FILE = 'hotkey_mapping.txt'
+if len(sys.argv) > 1:
+    HOTKEY_MAPPING_FILE = sys.argv[1]
 
 HIDE_OVERLAY_KEY = 0x13 # PAUSE BUTTON
 
@@ -151,94 +161,80 @@ KEY_INPUT_INTERVAL_MMB = KEY_INPUT_INTERVAL*2
 SWAP_ATTACK_ASSAULT_MOVE_HOTKEYS = True
 FORMATION_MOVE_DEFAULT = False
 
-HOTKEY_MAPPING = {
-    'home_base': 'BACK',
-    'last_notification': 'SPACE',
-    'place_structure': 'N',
-    #'select_type': ('LCONTROL', 'LMB'),
-    #'attack_move': ('A', None, 'LMB',),
-    #'assault_move': ('LCONTROL', 'RMB'),
-    #'formation_attack_move': ('A', None, 'LMENU', 'LMB',),
-    #'formation_assault_move': ('LCONTROL', 'LMENU', 'RMB'),
-    #'formation_move': ('LMENU', 'RMB'),
-    'all_units': 'Q',
-    'local_units': 'W',
-    #'all_units_of_type': ('LSHIFT', 'S'),
-    'repair': 'I',
-    'sell': 'O',
-    'power': 'P',
-    'ability_1': 'Z',
-    'ability_2': 'X',
-    'ability_3': 'C',
-    'ability_4': 'V',
-    'ability_5': 'B',
-    'support_1': 'H',
-    'support_2': 'J',
-    'support_3': 'K',
-    'support_4': 'L',
-    'support_5': 'OEM_1', # semicolon
-    'stop': 'S',
-    'guard': 'D',
-    'patrol': 'F',
-    'hold_position': 'G',
-    'tab_structures': 'E',
-    'tab_defensive': 'R',
-    'tab_infantry': 'T',
-    'tab_vehicles': 'Y',
-    'tab_aircraft': 'U',
-    'pause': 'ESCAPE',
-    'tab': 'TAB',
-    'rotate_left': 'OEM_PERIOD',
-    'rotate_right': 'OEM_2',
-    'doctrine_column_1': 'F1',
-    'doctrine_column_2': 'F2',
-    'doctrine_column_3': 'F3',
+
+HOTKEYS_TO_MAP = {
+    'home_base',
+    'last_notification',
+    'place_structure',
+    'all_units',
+    'local_units',
+    #'all_units_of_type',
+    'repair',
+    'sell',
+    'power',
+    'ability_1',
+    'ability_2',
+    'ability_3',
+    'ability_4',
+    'ability_5',
+    'support_1',
+    'support_2',
+    'support_3',
+    'support_4',
+    'support_5',
+    'attack',
+    'stop',
+    'guard',
+    'patrol',
+    'hold_position',
+    'tab_structures',
+    'tab_defensive',
+    'tab_infantry',
+    'tab_vehicles',
+    'tab_aircraft',
+    'pause',
+    'tab',
+    'rotate_left',
+    'rotate_right',
+    'doctrine_column_1',
+    'doctrine_column_2',
+    'doctrine_column_3',
+    'camera_location_1',
+    'camera_location_2',
+    'camera_location_3',
+    'camera_location_4',
 }
 
-# MY HOTKEY MAPPING (DIFFERENT!)
-HOTKEY_MAPPING = {
-    'home_base': 'H',
-    'last_notification': 'SPACE',
-    'place_structure': 'N',
-    #'select_type': ('LCONTROL', 'LMB'),
-    #'attack_move': ('LCONTROL', 'RMB'),
-    #'assault_move': ('A', None, 'LMB',),
-    #'formation_attack_move': ('LCONTROL', 'LMENU', 'RMB'),
-    #'formation_assault_move': ('A', None, 'LMENU', 'LMB',),
-    #'formation_move': ('LMENU', 'RMB'),
-    'all_units': 'OEM_3',
-    'local_units': 'CAPITAL',
-    #'all_units_of_type': ('LSHIFT', 'S'),
-    'repair': 'F',
-    'sell': 'Y',
-    'power': 'G',
-    'ability_1': 'Z',
-    'ability_2': 'X',
-    'ability_3': 'C',
-    'ability_4': 'V',
-    'ability_5': 'B',
-    'support_1': 'U',
-    'support_2': 'I',
-    'support_3': 'J',
-    'support_4': 'K',
-    'support_5': 'M',
-    'stop': 'S',
-    'guard': 'O',
-    'patrol': 'P',
-    'hold_position': 'D',
-    'tab_structures': 'Q',
-    'tab_defensive': 'W',
-    'tab_infantry': 'E',
-    'tab_vehicles': 'R',
-    'tab_aircraft': 'T',
-    'pause': 'ESCAPE',
-    'tab': 'TAB',
-    'rotate_left': 'OEM_PERIOD',
-    'rotate_right': 'OEM_2',
-    'doctrine_column_1': 'F1',
-    'doctrine_column_2': 'F2',
-    'doctrine_column_3': 'F3',
-}
+def read_hotkey_mapping(file_name):
+    with open(file_name) as f:
+        lines = f.read().split('\n')
+    mapping = {}
+    has_error = False
+    for line in lines:
+        if ':' not in line: continue
+        hotkey, value = line.split(':', 1)
+        tokens = [s.strip() for s in value.split(',')]
+        if hotkey not in HOTKEYS_TO_MAP:
+            log_error(f'Unknown command: {hotkey}', VERBOSITY_ERROR)
+            has_error = True
+        for token in tokens:
+            if token not in VK_KEYS:
+                log_error(f'Unknown key: "{token}" for {hotkey}', VERBOSITY_ERROR)
+                has_error = True
+        if len(tokens) == 1:
+            mapping[hotkey] = tokens[0]
+        else:
+            mapping[hotkey] = tokens
+    for hotkey in HOTKEYS_TO_MAP:
+        if hotkey not in mapping:
+            log_error(f'Unmapped command: {hotkey}', VERBOSITY_ERROR)
+            has_error = True
+    if has_error:
+        log_error('Errors found in configuration file. exiting...', VERBOSITY_ERROR)
+        quit(1)
+    return mapping
+
+HOTKEY_MAPPING = read_hotkey_mapping(HOTKEY_MAPPING_FILE)
 PRODUCTION_TABS = ['tab_structures','tab_defensive','tab_infantry','tab_vehicles','tab_aircraft']
 
 def mouse_down(button):
@@ -998,8 +994,10 @@ class InputTranslator(object):
         self.CREATE_GROUP = [press_key_combo(('LCONTROL', str(i+1))) for i in range(self.NUM_GROUPS)]
         self.STEAL_GROUP = [press_key_combo(('LMENU', str(i+1))) for i in range(self.NUM_GROUPS)]
 
-        self.SAVE_CAMERA = [press_key_combo(('LCONTROL', 'NUMPAD'+str(i+1))) for i in range(self.NUM_CAMERAS)]
-        self.LOAD_CAMERA = [press_key_combo('NUMPAD'+str(i+1)) for i in range(self.NUM_CAMERAS)]
+        self.SAVE_CAMERA = [press_key_combo(('LCONTROL', HOTKEY_MAPPING['camera_location_'+str(i+1)]))
+            for i in range(self.NUM_CAMERAS)]
+        self.LOAD_CAMERA = [press_key_combo(HOTKEY_MAPPING['camera_location_'+str(i+1)])
+            for i in range(self.NUM_CAMERAS)]
 
 
         self.HOVER_BUILD_WHEEL = {
@@ -1097,9 +1095,9 @@ class InputTranslator(object):
                 self.attack_move_ctrl_alt()
 
     def attack_move_default(self):
-        key_down('A')
+        key_down(HOTKEY_MAPPING['attack'])
         time.sleep(KEY_INPUT_INTERVAL)
-        key_up('A')
+        key_up(HOTKEY_MAPPING['attack'])
         self.mouse_manager.mouse_click('LMB')
 
     def attack_move_ctrl(self):
@@ -1109,10 +1107,10 @@ class InputTranslator(object):
         key_up('LCONTROL')
 
     def attack_move_default_alt(self):
-        key_down('A')
+        key_down(HOTKEY_MAPPING['attack'])
         time.sleep(KEY_INPUT_INTERVAL)
         key_down('LMENU')
-        key_up('A')
+        key_up(HOTKEY_MAPPING['attack'])
         self.mouse_manager.mouse_click('LMB')
         time.sleep(KEY_INPUT_INTERVAL)
         key_up('LMENU')
@@ -1561,7 +1559,7 @@ def find_tempest_rising_window():
     if hwnd != 0:
         return hwnd
 
-    log_error('Unable to find Tempest Rising window, broadening search...')
+    log_error('Unable to find Tempest Rising window, broadening search...', VERBOSITY_WARN)
 
     hwnd_ptr = []
     def winEnumHandler(hwnd, ctx):
@@ -1571,10 +1569,10 @@ def find_tempest_rising_window():
                 hwnd_ptr.append(hwnd)
     win32gui.EnumWindows(winEnumHandler,None)
     if len(hwnd_ptr) > 0:
-        log_error('Tempest Rising window found')
+        log_error('Tempest Rising window found', VERBOSITY_WARN)
         return hwnd_ptr[0]
 
-    log_error('Failed to find Tempest Rising window.')
+    log_error('Failed to find Tempest Rising window.', VERBOSITY_WARN)
     return None
 
 from ctypes import windll
