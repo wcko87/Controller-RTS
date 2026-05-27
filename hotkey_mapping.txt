@@ -1,3 +1,8 @@
+[Settings]
+SWAP_ATTACK_ASSAULT_MOVE_HOTKEYS = false
+FORMATION_MOVE_DEFAULT = false
+
+[Hotkeys]
 home_base: BACK
 last_notification: SPACE
 place_structure: N

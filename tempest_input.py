@@ -50,12 +50,10 @@ KEY_CONTROL_GROUP_SELECTOR = 'RB'
 KEY_MINIMAP_MOUSE = 'LT'
 KEY_SHIFT = 'RT'
 
-# KEY_TOOL_SELECTOR = 'DPAD_U'
 KEY_ACTION_SELECTOR = 'DPAD_L'
 KEY_CAMERA_LOCATIONS = 'DPAD_D'
 KEY_ICON_SELECTOR = 'DPAD_U'
 KEY_INFO_SELECTOR = 'DPAD_R'
-#KEY_SELECT_TYPE = 'DPAD_R'
 
 KEY_PAUSE = 'START'
 KEY_DOCTRINES = 'SEL'
@@ -64,13 +62,11 @@ KEY_ROTATE_LEFT = 'RS_L'
 KEY_ROTATE_RIGHT = 'RS_R'
 
 # Ability Selector keys
-#KEY_ABILITY_USE = 'LB'
-#KEY_SUPPORT_USE = 'RB'
 KEY_ABILITY_USE = 'RB'
 KEY_ABILITY_ALT_USE = 'LB'
 
-KEY_ABILITY_UPGRADE_1 = 'DPAD_U'
-KEY_ABILITY_UPGRADE_2 = 'DPAD_D'
+KEY_ABILITY_TAB_FORWARD = 'DPAD_R'
+KEY_ABILITY_TAB_BACKWARD = 'DPAD_L'
 
 
 # Action Selector keys
@@ -78,8 +74,6 @@ KEY_ACTION_GUARD = 'X'
 KEY_ACTION_PATROL = 'Y'
 KEY_ACTION_HOLD_POSITION = 'B'
 KEY_ACTION_STOP = 'A'
-#KEY_ACTION_ASSAULT_MOVE = 'LB'
-#KEY_ACTION_ATTACK_MOVE = 'RB'
 KEY_ACTION_TOGGLE_ASSAULT = 'RB'
 KEY_ACTION_TOGGLE_FORMATIONS = 'LB'
 
@@ -98,7 +92,6 @@ KEY_GROUP_LAST_NOTIFICATION = 'DPAD_R'
 KEY_BUILD_TRAIN = 'A'
 KEY_BUILD_CANCEL = 'B'
 KEY_BUILD_SWITCHTAB = 'Y'
-#KEY_BUILD_RALLYPOINT = 'X'
 KEY_BUILD_SELECT_STRUCTURES = 'X'
 
 KEY_BUILD_REPAIR = 'DPAD_L'
@@ -109,13 +102,11 @@ KEY_BUILD_PLACE_STRUCTURE = 'DPAD_D'
 # Unit Selections Selector Keys
 KEY_SELECTION_SELECT_ONLY = 'A'
 KEY_SELECTION_REMOVE = 'B'
-KEY_SELECTION_SELECT_TYPE = 'X'
-KEY_SELECTION_REMOVE_TYPE = 'Y'
+KEY_SELECTION_EXPAND = 'X'
+KEY_SELECTION_CENTER_CAM = 'Y'
 
 KEY_SELECTION_SCROLL_UP = 'DPAD_U'
 KEY_SELECTION_SCROLL_DOWN = 'DPAD_D'
-KEY_SELECTION_TAB_FORWARD = 'DPAD_R'
-KEY_SELECTION_TAB_BACKWARD = 'DPAD_L'
 
 # Camera Locations Selector Keys
 KEY_CAMERA_1 = 'A'
@@ -157,10 +148,6 @@ MOUSE_SENSITIVITY_ADJUSTMENT = 1.6
 
 KEY_INPUT_INTERVAL = 0.02
 KEY_INPUT_INTERVAL_MMB = KEY_INPUT_INTERVAL*2
-
-SWAP_ATTACK_ASSAULT_MOVE_HOTKEYS = True
-FORMATION_MOVE_DEFAULT = False
-
 
 HOTKEYS_TO_MAP = {
     'home_base',
@@ -209,22 +196,31 @@ def read_hotkey_mapping(file_name):
     with open(file_name) as f:
         lines = f.read().split('\n')
     mapping = {}
+    config = {}
     has_error = False
     for line in lines:
-        if ':' not in line: continue
-        hotkey, value = line.split(':', 1)
-        tokens = [s.strip() for s in value.split(',')]
-        if hotkey not in HOTKEYS_TO_MAP:
-            log_error(f'Unknown command: {hotkey}', VERBOSITY_ERROR)
-            has_error = True
-        for token in tokens:
-            if token not in VK_KEYS:
-                log_error(f'Unknown key: "{token}" for {hotkey}', VERBOSITY_ERROR)
+        if ':' in line:
+            hotkey, value = [s.strip() for s in line.split(':', 1)]
+            tokens = [s.strip() for s in value.split(',')]
+            if hotkey not in HOTKEYS_TO_MAP:
+                log_error(f'Unknown command: {hotkey}', VERBOSITY_ERROR)
                 has_error = True
-        if len(tokens) == 1:
-            mapping[hotkey] = tokens[0]
-        else:
-            mapping[hotkey] = tokens
+            for token in tokens:
+                if token not in VK_KEYS:
+                    log_error(f'Unknown key: "{token}" for {hotkey}', VERBOSITY_ERROR)
+                    has_error = True
+            if len(tokens) == 1:
+                mapping[hotkey] = tokens[0]
+            else:
+                mapping[hotkey] = tokens
+        if '=' in line:
+            key, value = [s.strip() for s in line.split('=', 1)]
+            if value.lower() == 'true':
+                config[key] = True
+            elif value.lower() == 'false':
+                config[key] = False
+            else:
+                log_error(f'Unknown option: {value}. It should be true or false.')
     for hotkey in HOTKEYS_TO_MAP:
         if hotkey not in mapping:
             log_error(f'Unmapped command: {hotkey}', VERBOSITY_ERROR)
@@ -232,9 +228,12 @@ def read_hotkey_mapping(file_name):
     if has_error:
         log_error('Errors found in configuration file. exiting...', VERBOSITY_ERROR)
         quit(1)
-    return mapping
+    return mapping, config
 
-HOTKEY_MAPPING = read_hotkey_mapping(HOTKEY_MAPPING_FILE)
+HOTKEY_MAPPING, settings = read_hotkey_mapping(HOTKEY_MAPPING_FILE)
+SWAP_ATTACK_ASSAULT_MOVE_HOTKEYS = settings['SWAP_ATTACK_ASSAULT_MOVE_HOTKEYS']
+FORMATION_MOVE_DEFAULT = settings['FORMATION_MOVE_DEFAULT']
+
 PRODUCTION_TABS = ['tab_structures','tab_defensive','tab_infantry','tab_vehicles','tab_aircraft']
 
 def mouse_down(button):
@@ -863,6 +862,8 @@ class InputTranslator(object):
             MODE_ABILITY : {
                 KEY_ABILITY_USE: self.click_ability_wheel(alt=False),
                 KEY_ABILITY_ALT_USE: self.click_ability_wheel(alt=True),
+                KEY_ABILITY_TAB_FORWARD: input_hotkey('tab'),
+                KEY_ABILITY_TAB_BACKWARD: self.tab_backward,
             },
             MODE_ACTION : {
                 KEY_ACTION_GUARD: input_hotkey('guard'),
@@ -902,12 +903,10 @@ class InputTranslator(object):
             MODE_SELECTION : {
                 KEY_SELECTION_SELECT_ONLY: lambda: self.click_selection_icon(ctrl=False, shift=False),
                 KEY_SELECTION_REMOVE: lambda: self.click_selection_icon(ctrl=False, shift=True),
-                #KEY_SELECTION_SELECT_TYPE: lambda: self.click_selection_icon(ctrl=True, shift=False),
-                #KEY_SELECTION_REMOVE_TYPE: lambda: self.click_selection_icon(ctrl=True, shift=True),
+                KEY_SELECTION_EXPAND: lambda: self.click_selection_icon(ctrl=True, shift=False),
+                KEY_SELECTION_CENTER_CAM: lambda: self.click_selection_icon(ctrl=True, shift=True,double=True),
                 KEY_SELECTION_SCROLL_UP: lambda: self.mouse_manager.click_button(TR_BOXES['selection_uparrow'], 'LMB'),
                 KEY_SELECTION_SCROLL_DOWN: lambda: self.mouse_manager.click_button(TR_BOXES['selection_downarrow'], 'LMB'),
-                KEY_SELECTION_TAB_FORWARD: input_hotkey('tab'),
-                KEY_SELECTION_TAB_BACKWARD: self.tab_backward,
             },
             MODE_CAMERA : {
                 KEY_CAMERA_1: lambda: self.camera_location(0),
@@ -1180,7 +1179,7 @@ class InputTranslator(object):
         self.ANGLES_SUPPORT_WHEEL[option]()
     """
 
-    def click_selection_icon(self, ctrl, shift):
+    def click_selection_icon(self, ctrl, shift, double=False):
         option = self.left_stick_option(self.NUM_SELECTION_ICONS)
         if option == -1: return
         if ctrl: key_down('LCONTROL')
@@ -1188,6 +1187,9 @@ class InputTranslator(object):
         #time.sleep(KEY_INPUT_INTERVAL)
         self.mouse_manager.click_button(TR_BOXES['selection%d'%(option+1)], 'LMB')
         time.sleep(KEY_INPUT_INTERVAL)
+        if double:
+            self.mouse_manager.click_button(TR_BOXES['selection%d'%(option+1)], 'LMB')
+            time.sleep(KEY_INPUT_INTERVAL)
         if ctrl: key_up('LCONTROL')
         if shift: self.shift_manager.release()
 
@@ -1802,6 +1804,7 @@ class OverlayUI(object):
 
         in_radius, out_radius = self.height*0.1, self.height*0.25
         wheel_label_x, wheel_label_y = self.center_x, self.center_y - self.height*0.3
+        
         if in_tr.current_mode == MODE_ABILITY:
             self._draw_wheel(self.center_x, self.center_y, self.height*0.20, self.height*0.35, in_tr.NUM_ABILITY_ICONS, phase_offset=in_tr.OFFSET_ABILITIES_WHEEL)
             for i in range(in_tr.NUM_ABILITY_ICONS):
@@ -1850,6 +1853,15 @@ class OverlayUI(object):
 
             self._draw_text(wheel_label_x, wheel_label_y - 0.08*self.height, 'Abilities / Upgrades / Support Powers')
             self._draw_thumbstick_input_line(self.center_x, self.center_y)
+            
+            dpad_pos_x = self.center_x - 0.51*self.height
+            dpad_pos_y = self.center_y + 0.05*self.height
+            dpad_text_offset_h = 0.10*self.height
+            dpad_text_offset_v = 0.08*self.height
+
+            self._draw_dpad(dpad_pos_x, dpad_pos_y)
+            self._draw_text_smaller(dpad_pos_x + dpad_text_offset_h, dpad_pos_y, 'Subselect\nnext')
+            self._draw_text_smaller(dpad_pos_x - dpad_text_offset_h, dpad_pos_y, 'Subselect\nprevious')
 
         elif in_tr.current_mode == MODE_ACTION:
             self._draw_text(wheel_label_x, wheel_label_y + 0.05*self.height, 'Actions')
@@ -1923,7 +1935,7 @@ class OverlayUI(object):
 
             cx, cy = self.center_x+offset_x - dist, self.center_y+offset_y
             self._draw_button_icon(cx, cy, 'X')
-            self._draw_text_small(cx, cy+offset_text, 'Combine', anchor='mm')
+            self._draw_text_small(cx, cy+offset_text, 'Add', anchor='mm')
 
             cx, cy = self.center_x+offset_x, self.center_y+offset_y - dist
             self._draw_button_icon(cx, cy, 'Y')
@@ -2026,13 +2038,13 @@ class OverlayUI(object):
             self._draw_button_icon(cx, cy, 'B')
             self._draw_text_small(cx, cy+offset_text, 'Remove', anchor='mm')
 
-            #cx, cy = self.center_x - dist, self.center_y
-            #self._draw_button_icon(cx, cy, 'X')
-            #self._draw_text_small(cx, cy+offset_text, 'Select Type', anchor='mm')
+            cx, cy = self.center_x - dist, self.center_y
+            self._draw_button_icon(cx, cy, 'X')
+            self._draw_text_small(cx, cy+offset_text, 'Expand', anchor='mm')
 
-            #cx, cy = self.center_x, self.center_y - dist
-            #self._draw_button_icon(cx, cy, 'Y')
-            #self._draw_text_small(cx, cy+offset_text, 'Remove Type', anchor='mm')
+            cx, cy = self.center_x, self.center_y - dist
+            self._draw_button_icon(cx, cy, 'Y')
+            self._draw_text_small(cx, cy+offset_text + 0.01*self.height, 'Center\nCamera', anchor='mm')
 
             dpad_pos_x = self.center_x - 0.55*self.height
             dpad_pos_y = self.center_y + 0.05*self.height
@@ -2040,8 +2052,6 @@ class OverlayUI(object):
             dpad_text_offset_v = 0.08*self.height
 
             self._draw_dpad(dpad_pos_x, dpad_pos_y)
-            self._draw_text_smaller(dpad_pos_x + dpad_text_offset_h, dpad_pos_y, 'Subselect\nnext')
-            self._draw_text_smaller(dpad_pos_x - dpad_text_offset_h, dpad_pos_y, 'Subselect\nprevious')
             self._paste_screengrab(dpad_pos_x, dpad_pos_y - dpad_text_offset_v, TR_BOXES['selection_uparrow'], center=True, scale=2)
             self._paste_screengrab(dpad_pos_x, dpad_pos_y + dpad_text_offset_v, TR_BOXES['selection_downarrow'], center=True, scale=2)
 
@@ -2134,6 +2144,29 @@ class OverlayUI(object):
         elif in_tr.current_mode == MODE_DOCTRINES:
             self._draw_text(wheel_label_x, wheel_label_y + 0.05*self.height, 'Doctrines')
             self._paste_screengrab(self.center_x, self.center_y, TR_BOXES['doctrine_view'], center=True, scale=2)
+            
+            dist = 0.075*self.height
+            offset_text = 0.04*self.height
+            offset_x = -0.36*self.height
+            offset_y = 0.13*self.height
+
+            cx, cy = self.center_x+offset_x, self.center_y+offset_y + dist
+            self._draw_button_icon(cx, cy, 'A')
+            self._draw_text_small(cx, cy+offset_text, 'Buy', anchor='mm')
+
+            cx, cy = self.center_x+offset_x + dist, self.center_y+offset_y
+            self._draw_button_icon(cx, cy, 'B')
+            self._draw_text_small(cx, cy+offset_text, 'Cancel', anchor='mm')
+
+            cx, cy = self.center_x+offset_x - dist, self.center_y+offset_y
+            self._draw_button_icon(cx, cy, 'X')
+            self._draw_text_small(cx, cy+offset_text, 'Buy Next', anchor='mm')
+            
+            dpad_pos_x = self.center_x - 0.36*self.height
+            dpad_pos_y = self.center_y - 0.03*self.height
+            
+            self._draw_dpad(dpad_pos_x, dpad_pos_y)
+            self._draw_text(dpad_pos_x, dpad_pos_y - 0.07*self.height, 'Navigation')
 
 
     def _draw_cursor(self):
