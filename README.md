@@ -62,7 +62,7 @@ Here are the main steps:
 - **LB**: Build wheel
 - **RB**: Control groups wheel
 - **LB+RB**: Unit selection wheel
-- **LT**: Minimap mouse
+- **LT**: Minimap / Fast pan (by holding A)
 - **RT**: Shift
 
 - **DPAD UP**: Quick icons menu
