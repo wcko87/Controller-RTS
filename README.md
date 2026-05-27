@@ -1,3 +1,8 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/w1qqnxpe1y2lu5o4?svg=true)](https://ci.appveyor.com/project/wcko87/controller-rts)
+
+# Download
+https://github.com/wcko87/Controller-RTS/releases
+
 # Introduction
 This program works by translating controller inputs into simulated mouse+keyboard inputs.
 
