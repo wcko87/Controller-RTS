@@ -1522,7 +1522,7 @@ def quick_icon_arrow(index):
 
 class ScreenGrabber(object):
     def __init__(self, rect):
-        self.sct = mss.mss()
+        self.sct = mss.MSS()
         self.screen_image = None
         self.screen_rect = rect
 
