@@ -20,7 +20,7 @@ Here are the main steps:
 	- This is because many inputs are simulated with hotkeys, and this will absolutely depend on what you have your hotkeys set to.
 2. Steam input:
 	- Use the layout **TR Controller Input Setup** from the community store.
-	- How: Right click Tempest Rising on steam, click **Properties**, click the **Controller** tab, click the underlined **Controller Configurator**, click on your current layout, click either **Community Layouts** or **Search**, then search for the layout.
+	- How: Right click Tempest Rising on steam, click **Properties**, click the **Controller** tab, enable Steam Input, click the underlined **Controller Configurator**, click on your current layout, click either **Community Layouts** or **Search**, then search for the layout.
 		- What this layout does: Makes the left stick control the right stick (the right stick controls the camera by default), disables the right stick's ability to control the camera, disables camera movement via stick while holding LT, LB, RB or Y.
 3. Plug in controller, open game, run program.
 	- The program should automatically detect the open game and overlay a cursor in the middle.
@@ -62,7 +62,7 @@ Here are the main steps:
 - **LB**: Build wheel
 - **RB**: Control groups wheel
 - **LB+RB**: Unit selection wheel
-- **LT**: Minimap mouse
+- **LT**: Minimap / Fast pan (by holding A)
 - **RT**: Shift
 
 - **DPAD UP**: Quick icons menu
