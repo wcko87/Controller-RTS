@@ -54,7 +54,7 @@ Here are the main steps:
 - **RS UP/DOWN**: Zoom
 - **RS LEFT/RIGHT**: Rotate structure
 - **RS CLICK**: Unused
-- **A**: Select unit (left click)
+- **A**: Select unit (left click). Hold A for brush select
 - **B**: Command unit (right click)
 - **X**: Attack move
 - **Y**: Ability/support powers/upgrades wheel
