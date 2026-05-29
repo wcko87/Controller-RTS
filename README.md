@@ -73,7 +73,7 @@ Here are the main steps:
 - **SELECT**: Doctrines menu
 - **START**: Pause
 
-### Ability/Suppoer Powers/Upgrades Wheel (Y):
+### Ability/Support Power/Upgrade Wheel (Y):
 **Wheel**: abilities(5), support powers(5), upgrades(2)
 - **LB**: cancel / toggle auto-cast (right click)
 - **RB**: use (left click)
