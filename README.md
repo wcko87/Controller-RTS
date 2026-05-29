@@ -96,8 +96,8 @@ Here are the main steps:
 
 ### Build Wheel (LB):
 **Wheel**: choose unit to produce (outer), production type (inner)
-- **A**: Train (hold RT)
-- **B**: Pause/Cancel
+- **A**: Train (hold RT to train 5 at a time)
+- **B**: Pause/Cancel (hold RT to cancel 5 at a time)
 - **X**: Select all structures from production tab (for setting rally points)
 - **Y**: Switch Tab
 
