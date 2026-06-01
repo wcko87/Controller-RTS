@@ -3,6 +3,10 @@
 # Download
 https://github.com/wcko87/Controller-RTS/releases
 
+### Video demonstration of the controls:
+[![Youtube Video](https://github.com/user-attachments/assets/7c530b57-ec88-403c-bcf8-e99782c3e127)](https://youtu.be/1T0yvwvXkYs)
+
+
 # Introduction
 This program works by translating controller inputs into simulated mouse+keyboard inputs.
 
